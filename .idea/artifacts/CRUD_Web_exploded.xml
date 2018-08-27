@@ -1,0 +1,16 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-war" name="CRUD:Web exploded">
+    <output-path>$PROJECT_DIR$/out/artifacts/CRUD_Web_exploded</output-path>
+    <root id="root">
+      <element id="javaee-facet-resources" facet="CRUD/web/Web" />
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="classes">
+          <element id="module-output" name="CRUD" />
+        </element>
+        <element id="directory" name="lib">
+          <element id="library" level="project" name="Maven: javax.servlet:javax.servlet-api:3.1.0" />
+        </element>
+      </element>
+    </root>
+  </artifact>
+</component>
