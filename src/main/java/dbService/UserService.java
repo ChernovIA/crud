@@ -1,9 +1,9 @@
 package dbService;
 
-import dbService.dao.UsersDAO;
-import dbService.dao.UsersDAOHibernateImpl;
-import dbService.dao.UsersDAOJDBCImpl;
-import dbService.dao.UsersDAOJPAImpl;
+import dbService.dao.DAOFactoryBuilder;
+import dbService.dao.UserDAO.UserDAOFactory;
+import dbService.dao.UserDAO.UsersDAO;
+import dbService.dataSets.Roles;
 import dbService.dataSets.User;
 import dbService.errorsEntity.StatusEntity;
 
@@ -14,7 +14,10 @@ public final class UserService {
     private UsersDAO usersDAO;
 
     public UserService() {
-        usersDAO = new UsersDAOJPAImpl();
+        DAOFactoryBuilder daoFactoryBuilder = DAOFactoryBuilder.getInstance();
+
+        //usersDAO = (UsersDAO) daoFactoryBuilder.getDAO("UserDAO");
+        usersDAO = UserDAOFactory.getInstance();
     }
 
     public StatusEntity createTable() {
@@ -100,7 +103,7 @@ public final class UserService {
     public StatusEntity<String> addTestUsers()  {
         StatusEntity<String> result = new StatusEntity<>();
         try {
-            User uds1 = new User("Admin", "admin");
+            User uds1 = new User("Admin", "admin","Ilya Chernov", Roles.ADMIN);
             User uds2 = new User("Moderator", "mod");
             User uds3 = new User("JavaProger", "java");
 

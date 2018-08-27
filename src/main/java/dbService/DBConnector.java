@@ -1,13 +1,15 @@
 package dbService;
 
 import dbService.dataSets.User;
-import org.hibernate.SessionFactory;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import dbService.utils.FilePath;
+import dbService.utils.PropertiesReader;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.jpa.HibernatePersistenceProvider;
-import org.hibernate.service.ServiceRegistry;
 
-import javax.persistence.*;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.SharedCacheMode;
+import javax.persistence.ValidationMode;
 import javax.persistence.spi.ClassTransformer;
 import javax.persistence.spi.PersistenceUnitInfo;
 import javax.persistence.spi.PersistenceUnitTransactionType;
@@ -15,118 +17,84 @@ import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URL;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.*;
 
-public class DBConnector {
-
-    private static final String DB_CLASS_NAME = "com.mysql.cj.jdbc.Driver";
-    private static final String DB_CONNECTION_STRING = "jdbc:mysql://localhost:3306/UserDataBase?autoReconnect=true&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC";
-
+public final class DBConnector {
+/*
     //?autoReconnect=true&useSSL=false - чтобы не ругался на ssl
     //useLegacyDatetimeCode=false&serverTimezone=UTC - чтобы не ругался на таймзону
-    private static final String DB_PARAMETRIES_STRING = "?autoReconnect=true&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC";
-    private static final String USER = "sa";
-    private static final String PASS = "saPass";
+*/
+    private static Properties properties;
 
-    private static final String DIALECT = "org.hibernate.dialect.MySQLDialect";
-    private static final String HBN2DDL = "update";
-    private static final String SHOW_SQL = "true";
+    private static class DBConnectorHolder{
+        static final DBConnector HOLDER_INSTANCE = new DBConnector();
+    }
+    static{
+        properties = PropertiesReader.getProperties(FilePath.CONNECTION_PROPERTIES);
+    }
+
+    public static DBConnector getInstance(){
+        return DBConnectorHolder.HOLDER_INSTANCE;
+    }
+
+    private DBConnector(){
+
+    }
+
     @SuppressWarnings("UnusedDeclaration")
-    public static Connection getMysqlConnection() {
+    public Connection getConnection() {
+
         try {
-            DriverManager.registerDriver((Driver) Class.forName(DB_CLASS_NAME).newInstance());
-
-            /*StringBuilder url = new StringBuilder();
-            url.
-                    append(DB_CONNECTION_STRING).
-                    append(DB_PARAMETRIES_STRING);*/
-
-            Connection connection = DriverManager.getConnection(DB_CONNECTION_STRING, USER, PASS);
-            return connection;
+            DriverManager.registerDriver((Driver) Class.forName(properties.getProperty("DB_CLASS_NAME")).newInstance());
+            return DriverManager.getConnection(properties.getProperty("DB_CONNECTION_STRING"), properties.getProperty("USER"), properties.getProperty("PASS"));
         } catch (SQLException | InstantiationException | IllegalAccessException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         return null;
     }
 
-    public static Configuration getMysqlConfigutarionHibernate() {
+    public Configuration getConfigutarion() {
 
         Configuration configuration = new Configuration();
         configuration.addAnnotatedClass(User.class);
 
-        configuration.setProperty("hibernate.dialect", DIALECT);
-        configuration.setProperty("hibernate.connection.driver_class", DB_CLASS_NAME);
-        configuration.setProperty("hibernate.connection.url", DB_CONNECTION_STRING);
-        configuration.setProperty("hibernate.connection.username", USER);
-        configuration.setProperty("hibernate.connection.password", PASS);
-        configuration.setProperty("hibernate.show_sql", SHOW_SQL);
-        configuration.setProperty("hibernate.hbm2ddl.auto", HBN2DDL);
+        configuration.setProperty("hibernate.dialect", properties.getProperty("DIALECT"));
+        configuration.setProperty("hibernate.connection.driver_class", properties.getProperty("DB_CLASS_NAME"));
+        configuration.setProperty("hibernate.connection.url", properties.getProperty("DB_CONNECTION_STRING"));
+        configuration.setProperty("hibernate.connection.username", properties.getProperty("USER"));
+        configuration.setProperty("hibernate.connection.password", properties.getProperty("PASS"));
+        configuration.setProperty("hibernate.show_sql", properties.getProperty("SHOW_SQL"));
+        configuration.setProperty("hibernate.hbm2ddl.auto", properties.getProperty("HBN2DDL"));
+
         return configuration;
 
     }
-    public static EntityManagerFactory getMysqlConfigutarionJPA_test() {
 
-        Map<String,Object> config = new HashMap<>();
+    public EntityManager getEntityManager() {
+
+        Map<String, Object> config = new HashMap<>();
         //Configuring JDBC properties
-        config.put("hibernate.connection.url", DB_CONNECTION_STRING);
-        config.put("hibernate.connection.user", USER);
-        config.put("hibernate.connection.password", PASS);
-        config.put("hibernate.connection.driver_class", DB_CLASS_NAME);
+        config.put("javax.persistence.jdbc.url", properties.getProperty("DB_CONNECTION_STRING"));
+        config.put("javax.persistence.jdbc.user", properties.getProperty("USER"));
+        config.put("javax.persistence.jdbc.password", properties.getProperty("PASS"));
+        config.put("javax.persistence.jdbc.driver", properties.getProperty("DB_CLASS_NAME"));
         //Hibernate properties
-        config.put("hibernate.dialect", DIALECT);
-        config.put("hibernate.hbm2ddl.auto", HBN2DDL);
-        config.put("hibernate.show_sql", SHOW_SQL);
-
-        Persistence.getPersistenceUtil();
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory("hibernateCRUD",config);
-
-        return emf;
-
-    }
-
-    public static EntityManagerFactory getMysqlConfigutarionJPA() {
-
-        Map<String,Object> config = new HashMap<>();
-        //Configuring JDBC properties
-        config.put("javax.persistence.jdbc.url", DB_CONNECTION_STRING);
-        config.put("javax.persistence.jdbc.user", USER);
-        config.put("javax.persistence.jdbc.password", PASS);
-        config.put("javax.persistence.jdbc.driver", DB_CLASS_NAME);
-        //Hibernate properties
-        config.put("hibernate.dialect", DIALECT);
-        config.put("hibernate.hbm2ddl.auto", HBN2DDL);
-        config.put("hibernate.show_sql", SHOW_SQL);
+        config.put("hibernate.dialect", properties.getProperty("DIALECT"));
+        config.put("hibernate.hbm2ddl.auto", properties.getProperty("HBN2DDL"));
+        config.put("hibernate.show_sql", properties.getProperty("SHOW_SQL"));
 
         EntityManagerFactory entityManagerFactory = new HibernatePersistenceProvider().createContainerEntityManagerFactory(
                 archiverPersistenceUnitInfo(),
                 config);
-
-        return entityManagerFactory;
+        return entityManagerFactory.createEntityManager();
 
     }
 
-    public static void printConnectionInfo(Connection connection) {
-
-        try {
-            DatabaseMetaData databaseMetaData = connection.getMetaData();
-            System.out.println("DB name - " + databaseMetaData.getDatabaseProductName());
-            System.out.println("DB version - " + databaseMetaData.getDatabaseProductVersion());
-            System.out.println("DB driver - " + databaseMetaData.getDriverName());
-            System.out.println("DB driver version - " + databaseMetaData.getDriverVersion());
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static SessionFactory createSessionFactory(Configuration configuration) {
-        StandardServiceRegistryBuilder builder = new StandardServiceRegistryBuilder();
-        builder.applySettings(configuration.getProperties());
-        ServiceRegistry serviceRegistry = builder.build();
-        return configuration.buildSessionFactory(serviceRegistry);
-    }
-
-    private static PersistenceUnitInfo archiverPersistenceUnitInfo() {
+    private PersistenceUnitInfo archiverPersistenceUnitInfo() {
         return new PersistenceUnitInfo() {
             @Override
             public String getPersistenceUnitName() {
@@ -211,7 +179,6 @@ public class DBConnector {
 
             @Override
             public void addTransformer(ClassTransformer transformer) {
-
             }
 
             @Override

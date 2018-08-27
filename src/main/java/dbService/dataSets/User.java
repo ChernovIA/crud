@@ -20,22 +20,30 @@ public class User {
     @Column(name = "password")
     private String password;
 
+    @Column(name = "role")
+    private String role;
+
     public User(){
 
     }
     public User(String login, String password) {
-        this(0,login,password,login);
+        this(0,login,password,login, Roles.USER);
     }
 
     public User(String login, String password, String name) {
-        this(0,login,password, name);
+        this(0,login,password, name, Roles.USER);
     }
 
-    public User(long id, String login, String password, String name) {
+    public User(String login, String password, String name, String role) {
+        this(0,login,password, name, role);
+    }
+
+    public User(long id, String login, String password, String name, String role) {
         this.id = id;
         this.login = login;
         this.password = password;
         this.name = name;
+        this.role = role;
     }
 
     public String getName() {
@@ -64,5 +72,13 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }
